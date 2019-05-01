@@ -1,3 +1,5 @@
+import sys
+
 import docker
 
 def show_current_containers():
@@ -18,10 +20,15 @@ def show_current_containers():
     if last_name is not None:
         container = client.containers.get(last_name)
         print(container.attrs.keys())
-    
-def main():
+
+def manage_container(args):
+    print(args)
+
+
+def main(args):
 
     show_current_containers()
+    manage_container(args)
     
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
