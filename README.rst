@@ -1,5 +1,9 @@
 Docker Utilities
 ================
+Requirements
+++++++++++++
+- Python 3.7+
+
 Create/Update container
 +++++++++++++++++++++++
 Steps

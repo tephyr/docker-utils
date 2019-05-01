@@ -1,5 +1,8 @@
+import json
+import pprint
 import sys
 
+import click
 import docker
 
 def show_current_containers():
@@ -21,8 +24,17 @@ def show_current_containers():
         container = client.containers.get(last_name)
         print(container.attrs.keys())
 
-def manage_container(args):
-    print(args)
+@click.command()
+@click.option('-n', '--name', required=True, help='which docker container to use')
+@click.argument('data', type=click.File('r'))
+def manage_container(name, data):
+    # print(data)
+    config = json.loads(data.read())
+    # print(f'Is recursive? {pprint.isrecursive(config)}; type? {type(config)}')
+    # pprint.pprint(config)
+
+    if name not in config['systems']:
+        raise KeyError(f'System not found: [{name}]')
 
 
 def main(args):
