@@ -5,9 +5,15 @@ import sys
 import click
 import docker
 
+client = None
+
+def _prep_client():
+    global client
+    client = docker.from_env(version='auto')
+
 def show_current_containers():
 
-    client = docker.from_env(version='auto')
+    global client
     
     last_name = None
     
@@ -36,9 +42,18 @@ def manage_container(name, data):
     if name not in config['systems']:
         raise KeyError(f'System not found: [{name}]')
 
+    pull_latest(config['systems'][name]['image'], config['systems'][name].get('tag', 'latest'))
+
+# @click.command()
+# @click.option('-i', '--image_name', required=True, help='Name of Docker image to pull')
+def pull_latest(image_name, tag):
+    global client
+    print(f'Will pull {image_name}:{tag}')
+    image = client.images.pull(image_name, tag=tag)
+    print(f'Image: {image}')
 
 def main(args):
-
+    _prep_client()
     show_current_containers()
     manage_container(args)
     
