@@ -4,6 +4,17 @@ Requirements
 ++++++++++++
 - Python 3.7+
 
+Commands
+++++++++
+``show``
+  Show current containers
+
+``pull``
+  Pull an image; defaults to latest
+
+``manage``
+  Refresh a container
+
 Create/Update container
 +++++++++++++++++++++++
 Steps
@@ -15,7 +26,7 @@ Steps
 
 #. Check if container, by name, is running.
 
-  - If so, shut it down.
+   - If so, shut it down.
 
 #. Create container.
 #. Return results.
