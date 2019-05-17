@@ -1,6 +1,7 @@
 import json
 import pprint
 import sys
+import traceback
 
 import click
 import docker
@@ -15,6 +16,14 @@ app_state = {
 def _prep_client():
     global app_state
     app_state['client'] = docker.from_env(version='auto')
+
+def _show_container_info(container):
+    """Show basic info about a container."""
+    name = container.name
+    last_name = name
+    imagePrimary = container.attrs['Image']
+    imageAttr = container.attrs['Config']['Image']
+    print(f"{container.short_id}: {name}, {imageAttr}, {imagePrimary}")
 
 @click.group()
 @click.option('-v', '--verbose', count=True)
@@ -40,13 +49,7 @@ def show_current_containers():
 
     for container in app_state['client'].containers.list():
         container_count += 1
-        #print(container)
-        #print(container.attrs)
-        name = container.attrs['Name']
-        last_name = name
-        imagePrimary = container.attrs['Image']
-        imageAttr = container.attrs['Config']['Image']
-        print(f"{container}: {name}, {imageAttr}, {imagePrimary}")
+        _show_container_info(container)
 
     if last_name is not None:
         container = app_state['client'].containers.get(last_name)
@@ -60,7 +63,7 @@ def show_current_containers():
 def manage_container(name, data):
     """Refresh a container start-to-finish: pull latest image, shut down if running, create container"""
     global app_state
-    config = json.loads(data.read())
+    app_state['config'] = config = json.loads(data.read())
     # pprint.pprint(config)
 
     if name not in config['systems']:
@@ -71,6 +74,7 @@ def manage_container(name, data):
             print(f"Pull {config['systems'][name]['image']} using tag {config['systems'][name].get('tag', 'latest')}")
         pull_image_with_output(config['systems'][name]['image'], config['systems'][name].get('tag', 'latest'))
         stop_container(name)
+        create_container(name)
 
 @cli.command(name="pull")
 @click.option('-i', '--image_name', required=True, help='Name of Docker image to pull')
@@ -96,16 +100,42 @@ def stop_container(container_name):
     """Check if container is running, and stop it."""
     try:
         container = app_state['client'].containers.get(container_name)
-        if container.attrs['Status'] == 'running':
+        if container.status == 'running':
             result = container.wait()
             if app_state['verbosity'] > 0:
                 pprint.pprint(result)
+        elif container is not None:
+            result = container.remove()
+            if app_state['verbosity'] > 0:
+                pprint.pprint(result)
+
 
     except docker.errors.NotFound:
         # OK
         if app_state['verbosity'] > 0:
             print(f'Container {container_name} not found; continuing.')
         pass
+
+def create_container(container_name):
+    try:
+        config = app_state['config']['systems'][container_name]
+        options = config.get('create', {})
+        options['name'] = container_name
+
+        print(f'Creating container named {container_name}')
+        if app_state['verbosity'] > 0:
+            print('\tContainer options')
+            pprint.pprint(options)
+
+        container = app_state['client'].containers.create(config['image'], **options)
+
+        print('Container created')
+        _show_container_info(container)
+
+    except docker.errors.ImageNotFound:
+        print("Image [{}] not found; aborting.")
+    except:
+        traceback.print_exc()
 
 
 if __name__ == '__main__':
