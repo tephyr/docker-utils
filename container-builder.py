@@ -70,6 +70,7 @@ def manage_container(name, data):
         if app_state['verbosity'] > 0:
             print(f"Pull {config['systems'][name]['image']} using tag {config['systems'][name].get('tag', 'latest')}")
         pull_image_with_output(config['systems'][name]['image'], config['systems'][name].get('tag', 'latest'))
+        stop_container(name)
 
 @cli.command(name="pull")
 @click.option('-i', '--image_name', required=True, help='Name of Docker image to pull')
@@ -80,6 +81,7 @@ def pull(image_name, tag):
     pull_image_with_output(image_name, tag)
 
 def pull_image(image_name, tag):
+    """Pull image using Docker API."""
     global app_state
     print(f'Will pull {image_name}:{tag}')
     image = app_state['client'].images.pull(image_name, tag=tag)
@@ -89,6 +91,22 @@ def pull_image_with_output(image_name, tag):
     """Pull image using plumbum to show progress."""
     dckr = plumbum.local['docker']
     dckr['image', 'pull', f'{image_name}:{tag}'] & plumbum.FG
+
+def stop_container(container_name):
+    """Check if container is running, and stop it."""
+    try:
+        container = app_state['client'].containers.get(container_name)
+        if container.attrs['Status'] == 'running':
+            result = container.wait()
+            if app_state['verbosity'] > 0:
+                pprint.pprint(result)
+
+    except docker.errors.NotFound:
+        # OK
+        if app_state['verbosity'] > 0:
+            print(f'Container {container_name} not found; continuing.')
+        pass
+
 
 if __name__ == '__main__':
     cli()
