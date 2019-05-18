@@ -69,12 +69,15 @@ def manage_container(name, data):
     if name not in config['systems']:
         raise KeyError(f'System not found: [{name}]')
 
+    image_name = config['systems'][name]['image']
+    tag = config['systems'][name].get('tag', 'latest')
+
     if not app_state['debug']:
         if app_state['verbosity'] > 0:
-            print(f"Pull {config['systems'][name]['image']} using tag {config['systems'][name].get('tag', 'latest')}")
-        pull_image_with_output(config['systems'][name]['image'], config['systems'][name].get('tag', 'latest'))
+            print(f"Pull {image_name} using tag {tag}")
+        pull_image_with_output(image_name, tag)
         stop_container(name)
-        create_container(name)
+        create_container(name, tag)
 
 @cli.command(name="pull")
 @click.option('-i', '--image_name', required=True, help='Name of Docker image to pull')
@@ -116,18 +119,18 @@ def stop_container(container_name):
             print(f'Container {container_name} not found; continuing.')
         pass
 
-def create_container(container_name):
+def create_container(name, tag):
     try:
-        config = app_state['config']['systems'][container_name]
+        config = app_state['config']['systems'][name]
         options = config.get('create', {})
-        options['name'] = container_name
+        options['name'] = name
 
-        print(f'Creating container named {container_name}')
+        print(f'Creating container [{name}] from {config["image"]}:{tag}')
         if app_state['verbosity'] > 0:
             print('\tContainer options')
             pprint.pprint(options)
 
-        container = app_state['client'].containers.create(config['image'], **options)
+        container = app_state['client'].containers.create(f'{config["image"]}:{tag}', **options)
 
         print('Container created')
         _show_container_info(container)
