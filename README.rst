@@ -1,8 +1,11 @@
 Docker Utilities
 ================
+A suite of customized Docker utilities to simplify common multi-step tasks.
+
 Requirements
 ++++++++++++
 - Python 3.7+
+- Install supporting modules: ``pip install -r requirements.txt``
 
 Commands
 ++++++++
@@ -17,6 +20,10 @@ Commands
 
 Create/Update container
 +++++++++++++++++++++++
+Typical command::
+
+    python container-builder.py -v manage -n DOCKER_CONTAINER_NAME --data FILENAME
+
 Steps
 
 #. Verify that 'name' parameter matches a "systems" key.
