@@ -40,3 +40,55 @@ Steps
 
    - Updated image info.
    - Name of created container.
+
+Data format
++++++++++++
+- ``CONTAINER_NAME`` is the chosen name for the built container.
+- ``IMAGE_SOURCE`` is the canonical Docker image name.
+- ``tag`` element is optional.
+- Fill the optional ``environment``, ``ports``, and ``volumes`` values using the docker-py_ syntax for those elements:
+
+::
+
+    {
+        "systems": {
+            "CONTAINER_NAME": {
+                "image": "IMAGE_SOURCE",
+                "tag": "<OPTIONAL>",
+                "create": {
+                    "environment": [],
+                    "ports": {},
+                    "volumes": {}
+                }
+            }
+        }
+    }
+
+Examples::
+
+    {
+        "systems": {
+            "couchdb": {
+                "image": "apache/couchdb"
+            },
+            "nextcloud": {
+                "image": "nextcloud",
+                "tag": "15",
+                "create": {
+                    "environment": [
+                        "NEXTCLOUD_TRUSTED_DOMAINS='example:7070 localhost'"
+                    ],
+                    "ports": {
+                        "80/tcp": 7070
+                    },
+                    "volumes": {
+                        "/opt/storage/nextcloud-data": {
+                            "bind": "/var/www/html", "mode": "rw"
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+.. _docker-py: https://github.com/docker/docker-py
